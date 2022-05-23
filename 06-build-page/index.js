@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { text } = require('stream/consumers');
 const locationProjectDist = path.join(__dirname, 'project-dist');
 
 let location = path.join(__dirname, 'styles'); // путь к папке со стилями
@@ -7,12 +8,11 @@ let locationForStylesFile = path.join(__dirname, 'project-dist', 'style.css'); /
 
 const locationHtml = path.join(__dirname, 'project-dist', 'index.html');
 const locationTemplate = path.join(__dirname, 'template');
-const output2 = fs.createWriteStream(locationHtml); // вывод, создание потока записи в файл index.html
 
 const locationAssetsFirst = path.join(__dirname, 'assets');
 const locationAssetsSecond = path.join(__dirname, 'project-dist', 'assets');
 
-const output = fs.createWriteStream(locationForStylesFile); // вывод, создание потока записи в файл style.css
+
 
 fs.promises.mkdir(locationProjectDist, {recursive:true}).then (function() { //создание папки project-dist
     console.log('Папка создана');
@@ -59,7 +59,6 @@ fs.readdir(locationAssetsSecond, (err, files) => {
       });
     }
   });
-
         fs.copyFile(path.join(locationAssetsFirst, files[i]), path.join(locationAssetsSecond, files[i]), (err) => {
         });
             } else if (stats.isDirectory) {
@@ -68,7 +67,18 @@ fs.readdir(locationAssetsSecond, (err, files) => {
           }
         }
         }
-        copyAssets(locationAssetsFirst)
+        copyAssets(locationAssetsFirst);
+
+        const output = fs.createWriteStream(locationForStylesFile); // вывод, создание потока записи в файл style.css
+        const output2 = fs.createWriteStream(locationHtml); // вывод, создание потока записи в файл index.html
+
+        const temp = path.join(__dirname, 'template.html');
+        const componentsLocation = path.join(__dirname, 'components');
+        const htmlNewFile = path.join(locationHtml);
+
+  
+
+
     
 
 
