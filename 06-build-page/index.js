@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { text } = require('stream/consumers');
 const locationProjectDist = path.join(__dirname, 'project-dist');
 
 let location = path.join(__dirname, 'styles'); // путь к папке со стилями
@@ -70,15 +69,31 @@ fs.readdir(locationAssetsSecond, (err, files) => {
         copyAssets(locationAssetsFirst);
 
         const output = fs.createWriteStream(locationForStylesFile); // вывод, создание потока записи в файл style.css
-        const output2 = fs.createWriteStream(locationHtml); // вывод, создание потока записи в файл index.html
-
+        // const output2 = fs.createWriteStream(locationHtml); // вывод, создание потока записи в файл index.html
         const temp = path.join(__dirname, 'template.html');
         const componentsLocation = path.join(__dirname, 'components');
         const htmlNewFile = path.join(locationHtml);
 
-  
+        async function myNewHtml(temp) { // асинхронная функция принимает аргумент путь к папке
+        // const file = await fs.promises.readdir(temp); // возвращает массив имен файлов в папке
+        // console.log(file)
+        const readStream = fs.createReadStream(temp, 'utf-8');
+        // readStream.on('data', chunk => console.log(chunk));
+        let data = '';
+        readStream.on('data', chunk => data += chunk);
+        readStream.on('error', error => console.log('Error', error.message));
 
+        const writePromise = await new Promise((res) => {
+          const readStream = fs.createReadStream(temp);
 
+          const writeStream = fs.createWriteStream(locationHtml, { flags: 'a'}); // создание потока записи, в файл html, флаг 'a' (append), чтобы файл дописывался, а не перезаписывался новым потоком
+          readStream.pipe(writeStream); // поток чтения переходит в поток записи
+          readStream.on('end', () => res());
+        });
+        await writePromise;
+
+       }
+          myNewHtml(temp);
     
 
 
