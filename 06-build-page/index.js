@@ -1,25 +1,35 @@
 const fs = require('fs');
 const path = require('path');
 const locationProjectDist = path.join(__dirname, 'project-dist');
-
 let location = path.join(__dirname, 'styles'); // путь к папке со стилями
 let locationForStylesFile = path.join(__dirname, 'project-dist', 'style.css'); //путь к новому файлу style.css
-
 const locationHtml = path.join(__dirname, 'project-dist', 'index.html');
-// const locationTemplate = path.join(__dirname, 'template');
-
 const locationAssetsFirst = path.join(__dirname, 'assets');
 const locationAssetsSecond = path.join(__dirname, 'project-dist', 'assets');
-const locationCompFolder = path.join(__dirname, 'components');
+const temp = path.join(__dirname, 'template.html');
 
+(async () => {
+  try {
+    await fs.promises.access(locationProjectDist, fs.constants.F_OK);
+    await fs.promises.rm(locationProjectDist, { recursive: true, force: true });
+  } catch {
+    // console.log('Dir not exist');
+  } finally {
+    fs.promises.mkdir(locationProjectDist, {recursive:true});
+    createStyles(location);
+    fs.promises.mkdir(locationAssetsSecond, {recursive:true});
+    copyAssets(locationAssetsFirst, locationAssetsSecond);
+    myNewHtml(temp);
+  }
+})();
 
-fs.promises.mkdir(locationProjectDist, {recursive:true}).then (function() { //создание папки project-dist
+ fs.promises.mkdir(locationProjectDist, {recursive:true}).then (function() { //создание папки project-dist
     // console.log('Папка создана');
 }).catch (function () {
     console.log('Папка не создана')
 });
 
-async function myReadDir(location) { // асинхронная функция принимает аргумент путь к папке
+async function createStyles(location) { // асинхронная функция принимает аргумент путь к папке
     const files = await fs.promises.readdir(location); // возвращает массив имен файлов в папке
     for (let i = 0; i < files.length; i++) {
       let fileName = path.join(location, files[i]);
@@ -35,28 +45,23 @@ async function myReadDir(location) { // асинхронная функция п
         }
     }
     }
-    myReadDir(location);
-
+    
+    
     fs.promises.mkdir(locationAssetsSecond, {recursive:true}).then (function() {
         // console.log('Папка создана');
     }).catch (function () {
         console.log('Папка не создана')
     });
+  
 
   async function copyAssets(locationAssetsFirst, locationAssetsSecond) { // асинхронная функция принимает аргумент путь к папке
       const files = await fs.promises.readdir(locationAssetsFirst); // возвращает массив имен файлов в папке
       for (let i = 0; i < files.length; i++) {
-       
-        // console.log(files[i])
         let file = path.join(locationAssetsFirst, files[i]);
-        // console.log(file)
         const stats = await fs.promises.stat(file);
         let fileCopy = path.join(locationAssetsSecond, files[i])
-        // console.log((path.join(__dirname, locationAssetsSecond, files[i])))
       if (stats.isFile()) { 
-
       fs.copyFile(file, fileCopy, (err) => {
-       
       });
           } else {
               fs.mkdir(path.join(locationAssetsSecond, files[i]),{ recursive: true },  (err) => {
@@ -65,15 +70,11 @@ async function myReadDir(location) { // асинхронная функция п
         }
       }
 }
-        copyAssets(locationAssetsFirst, locationAssetsSecond);
+       
 
-        const output = fs.createWriteStream(locationForStylesFile); // вывод, создание потока записи в файл style.css
-        const temp = path.join(__dirname, 'template.html');
-        const componentsLocation = path.join(__dirname, 'components');
-        const htmlNewFile = path.join(locationHtml);
-
+        // const output = fs.createWriteStream(locationForStylesFile); // вывод, создание потока записи в файл style.css
+       
         async function myNewHtml(temp) { // асинхронная функция принимает аргумент путь к папке
-        // const file = await fs.promises.readdir(temp); // возвращает массив имен файлов в папке
         const readStream = fs.createReadStream(temp, 'utf-8');
         // readStream.on('data', chunk => console.log(chunk));
         let data = '';
@@ -82,7 +83,6 @@ async function myReadDir(location) { // асинхронная функция п
 
         const writePromise = await new Promise((res) => {
           const readStream = fs.createReadStream(temp);
-
           const writeStream = fs.createWriteStream(locationHtml, { flags: 'a'}); 
           readStream.pipe(writeStream); 
           readStream.on('end', () => res());
@@ -91,28 +91,16 @@ async function myReadDir(location) { // асинхронная функция п
 
         let template = await fs.promises.readFile(path.resolve(__dirname, 'template.html'));
         template = template.toString();
-        // console.log(template)
         
         const compNames = template.match(/(?<=\{\{).+(?=\}\})/g);
-        // console.log(compNames);
         for(let i = 0; i < compNames.length; i++){
-          // console.log(compNames[i]);
 
           const compContent = await fs.promises.readFile(path.join(__dirname, 'components', `${compNames[i]}.html`));
-          
-          template = template.replace(`{{${compNames[i]}}}`, compContent);
-          // console.log(template)
-          
+          template = template.replace(`{{${compNames[i]}}}`, compContent);       
           await fs.promises.writeFile(path.resolve(locationProjectDist, 'index.html'), template);
 
-          // await fs.promises.writeFile(path.join(locationHtml));
         }
-   
-
       }
-
-        
-          myNewHtml(temp);
          
     
 
